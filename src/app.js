@@ -189,7 +189,8 @@ export function getNextWibOccurrence(schedule, now = Date.now()) {
 
     const startTime = getWibTimestamp(candidateDay, schedule.start);
     const endTime = schedule.end ? getWibTimestamp(candidateDay, schedule.end) : startTime;
-    if (schedule.end ? now < endTime : now < startTime) return { startTime, endTime };
+    const expireTime = schedule.end ? endTime : startTime + 3600 * 1000;
+    if (now < expireTime) return { startTime, endTime };
   }
 
   const fallbackDay = new Date(todayWibMidnight + 7 * DAY_MS);
@@ -711,9 +712,11 @@ function loadTimers() {
 }
 
 function hydrateTimers(value) {
+  const now = Date.now();
   return Array.isArray(value)
     ? value
       .filter((timer) => typeof timer.id === "string" && typeof timer.name === "string" && typeof timer.world === "string" && Number.isFinite(timer.targetTime))
+      .filter((timer) => now <= timer.targetTime + 3600 * 1000)
       .map((timer) => ({ ...timer, location: typeof timer.location === "string" ? timer.location : getBossLocation(timer.name) }))
     : [];
 }
