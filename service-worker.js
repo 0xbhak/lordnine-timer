@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "lordnine-boss-timer-v9";
+const CACHE_NAME = "lordnine-boss-timer-v10";
 const ASSETS = ["/", "/index.html", "/styles.css", "/src/app.js", "/manifest.webmanifest", "/favicon.png", "/pwa-icon-192.png", "/pwa-icon-512.png"];
 
 self.addEventListener("install", (event) => {
