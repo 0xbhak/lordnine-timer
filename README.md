@@ -4,6 +4,12 @@ Web-based boss timer app. Paste the copied boss list, tap **Set timers**, and th
 
 The app runs as a local web app/PWA from the files in this repository.
 
+## Screenshots
+
+![Paste Boss Data](images/paste_view.png)
+![Active Timers](images/active_timers_view.png)
+
+
 ## Run the web app
 
 ```bash
