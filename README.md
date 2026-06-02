@@ -1,6 +1,6 @@
 # Lordnine Boss Timer
 
-Web-based boss timer app. Paste the copied boss list, tap **Set timers**, and the app turns each cooldown timestamp into a sorted countdown. Shared timer writes require PIN `4444` and sync through the small `/api/timers` backend.
+Web-based boss timer app. Paste the copied boss list, tap **Set timers**, and the app turns each cooldown timestamp into a sorted countdown. Shared timer writes require a PIN (default `4444`, configurable via environment variable) and sync through the small `/api/timers` backend.
 
 The app runs as a local web app/PWA from the files in this repository.
 
