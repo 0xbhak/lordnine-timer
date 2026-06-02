@@ -5,7 +5,6 @@ export const REMINDER_OFFSETS = Object.freeze([
   Object.freeze({ minutes: 10, label: "10-minute", ms: 10 * 60 * 1000 }),
   Object.freeze({ minutes: 5, label: "5-minute", ms: 5 * 60 * 1000 })
 ]);
-const GLOBAL_WRITE_PIN = "4444";
 const NOTIFIED_REMINDERS_KEY = `${STORAGE_KEY}-notified-reminders`;
 const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -624,14 +623,9 @@ function initApp() {
       const handleSubmit = (event) => {
         event.preventDefault();
         const pin = pinInput.value.trim();
-
-        if (pin !== GLOBAL_WRITE_PIN) {
-          setStatus("Wrong PIN. Shared timers were not changed.", "error");
-          pinFeedback.textContent = "Wrong PIN. Nothing was saved or cleared.";
-          pinFeedback.classList.add("error");
-          showToast("error", "PIN is wrong", "Nothing was saved or cleared.");
-          updateSyncStatus("failed", "PIN failed", lastGlobalUpdatedAt);
-          pinInput.select();
+        
+        if (!pin) {
+          pinInput.focus();
           return;
         }
 

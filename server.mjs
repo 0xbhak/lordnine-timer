@@ -19,7 +19,9 @@ const types = new Map([
 
 const PORT = Number(process.env.PORT || 4173);
 const HOST = process.env.HOST || "0.0.0.0";
-const GLOBAL_WRITE_PIN = "4444";
+const GLOBAL_WRITE_PIN = process.env.WRITE_PIN || "4444";
+const MAX_PAYLOAD_SIZE = 100 * 1024; // 100 KB
+const MAX_TIMERS = 300;
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
@@ -41,10 +43,17 @@ const server = createServer(async (req, res) => {
     
     if (req.method === "PUT") {
       let bodyStr = "";
+      let tooLarge = false;
       req.on("data", chunk => {
+        if (tooLarge) return;
         bodyStr += chunk;
+        if (bodyStr.length > MAX_PAYLOAD_SIZE) {
+          tooLarge = true;
+          req.connection.destroy();
+        }
       });
       req.on("end", async () => {
+        if (tooLarge) return;
         let body;
         try {
           body = JSON.parse(bodyStr);
@@ -54,8 +63,10 @@ const server = createServer(async (req, res) => {
 
         if (body?.pin !== GLOBAL_WRITE_PIN) return sendJson({ error: "Invalid PIN" }, 403);
 
-        const timers = Array.isArray(body?.timers) ? body.timers.map(normalizeTimer).filter(Boolean) : null;
-        if (!timers) return sendJson({ error: "Expected timers array" }, 400);
+        if (!Array.isArray(body?.timers)) return sendJson({ error: "Expected timers array" }, 400);
+        if (body.timers.length > MAX_TIMERS) return sendJson({ error: "Too many timers" }, 400);
+        
+        const timers = body.timers.map(normalizeTimer).filter(Boolean);
 
         const state = { timers, updatedAt: new Date().toISOString() };
         try {
@@ -74,14 +85,18 @@ const server = createServer(async (req, res) => {
 
   // Serve static files
   const path = url.pathname === "/" ? "/index.html" : url.pathname;
-  const filePath = join(__dirname, path);
-
-  // Security check: ensure filePath is inside __dirname
-  if (!filePath.startsWith(__dirname)) {
-    res.writeHead(404, { "content-type": "text/plain" });
-    res.end("Not found");
+  
+  // Security check: explicit allowlist of public paths to prevent exposing backend code and data
+  const allowedPaths = ["/index.html", "/styles.css", "/favicon.png", "/icon.svg", "/manifest.webmanifest", "/service-worker.js", "/pwa-icon-192.png", "/pwa-icon-512.png"];
+  const isAllowedPath = allowedPaths.includes(path) || path.startsWith("/src/") || path.startsWith("/images/");
+  
+  if (!isAllowedPath || path.includes("..")) {
+    res.writeHead(403, { "content-type": "text/plain" });
+    res.end("Forbidden");
     return;
   }
+
+  const filePath = join(__dirname, path);
 
   try {
     const fileStat = await stat(filePath);
